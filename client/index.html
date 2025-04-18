@@ -25,7 +25,7 @@
   </div>
 
   <script>
-    const socket = io('http://localhost:3000');
+    const socket = io(); // Updated to dynamic URL
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
     const joinBtn = document.getElementById('joinBtn');
@@ -62,6 +62,7 @@
 
         socket.emit('join', roomIdInput.value);
       } catch (err) {
+        alert('Failed to access camera or microphone. Please check permissions.');
         console.error('Error accessing media devices:', err);
       }
     }
