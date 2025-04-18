@@ -6,14 +6,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://zukalive.onrender.com',
+    origin: '*',
   }
-});
-
-app.use(express.static('public'));
-
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
 });
 
 const rooms = {};
@@ -53,7 +47,6 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
 });
