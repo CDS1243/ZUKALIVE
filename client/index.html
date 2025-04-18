@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zuka - Video & Audio Call</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-4">Zuka</h1>
+    <div class="mb-4">
+      <input id="roomId" type="text" placeholder="Enter Room ID" class="w-full p-2 border rounded">
+      <button id="joinBtn" class="w-full bg-blue-500 text-white p-2 rounded mt-2 hover:bg-blue-600">Join Call</button>
+    </div>
+    <div class="flex space-x-2 mb-4">
+      <button id="toggleAudio" class="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Mute Audio</button>
+      <button id="toggleVideo" class="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Stop Video</button>
+    </div>
+    <div class="flex flex-col space-y-4">
+      <video id="localVideo" autoplay muted class="w-full rounded border"></video>
+      <video id="remoteVideo" autoplay class="w-full rounded border"></video>
+    </div>
+  </div>
+
+  <script>
+    const socket = io('http://localhost:3000');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const joinBtn = document.getElementById('joinBtn');
+    const roomIdInput = document.getElementById('roomId');
+    const toggleAudioBtn = document.getElementById('toggleAudio');
+    const toggleVideoBtn = document.getElementById('toggleVideo');
+
+    let localStream;
+    let peerConnection;
+    let isAudioOn = true;
+    let isVideoOn = true;
+
+    const configuration = {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    };
+
+    async function startCall() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        peerConnection = new RTCPeerConnection(configuration);
+
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          remoteVideo.srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', { roomId: roomIdInput.value, candidate: event.candidate });
+          }
+        };
+
+        socket.emit('join', roomIdInput.value);
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
+      }
+    }
+
+    socket.on('user-joined', async () => {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('offer', { roomId: roomIdInput.value, offer });
+    });
+
+    socket.on('offer', async ({ offer }) => {
+      if (!peerConnection) {
+        peerConnection = new RTCPeerConnection(configuration);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        peerConnection.ontrack = event => {
+          remoteVideo.srcObject = event.streams[0];
+        };
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', { roomId: roomIdInput.value, candidate: event.candidate });
+          }
+        };
+      }
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.emit('answer', { roomId: roomIdInput.value, answer });
+    });
+
+    socket.on('answer', async ({ answer }) => {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('ice-candidate', async ({ candidate }) => {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error('Error adding ICE candidate:', err);
+      }
+    });
+
+    joinBtn.addEventListener('click', startCall);
+
+    toggleAudioBtn.addEventListener('click', () => {
+      isAudioOn = !isAudioOn;
+      localStream.getAudioTracks().forEach(track => (track.enabled = isAudioOn));
+      toggleAudioBtn.textContent = isAudioOn ? 'Mute Audio' : 'Unmute Audio';
+    });
+
+    toggleVideoBtn.addEventListener('click', () => {
+      isVideoOn = !isVideoOn;
+      localStream.getVideoTracks().forEach(track => (track.enabled = isVideoOn));
+      toggleVideoBtn.textContent = isVideoOn ? 'Stop Video' : 'Start Video';
+    });
+  </script>
+</body>
+</html>
