@@ -1,5 +1,5 @@
 {
-  "name": "zuka-video-call",
+  "name": "zuka-server",
   "version": "1.0.0",
   "description": "Video and audio call application with Socket.IO",
   "main": "server.js",
