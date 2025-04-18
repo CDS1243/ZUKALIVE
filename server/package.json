@@ -1,7 +1,7 @@
 {
-  "name": "zuka-video-call",
+  "name": "zukalive",
   "version": "1.0.0",
-  "description": "Video and audio call application with Socket.IO",
+  "description": "Video and audio call application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
