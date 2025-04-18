@@ -1,20 +1,12 @@
 {
-  "name": "zuka-video-call",
-  "version": "1.0.0",
-  "description": "Video and audio call application with Socket.IO",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "socket.io": "^4.8.1"
-  },
-  "engines": {
-    "node": "18.x"
-  },
-  "devDependencies": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
-}
+    "name": "zuka-server",
+    "version": "1.0.0",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "socket.io": "^4.5.4"
+    }
+  }
