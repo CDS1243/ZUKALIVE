@@ -6,8 +6,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // Adjust this in production to specific origins for security
+    origin: 'https://zukalive.onrender.com',
   }
+});
+
+app.use(express.static('public'));
+
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
 });
 
 const rooms = {};
@@ -47,7 +53,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Use the dynamic port assigned by Render
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
